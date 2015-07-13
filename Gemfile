@@ -15,6 +15,7 @@ gem 'redis'
 gem 'sequel'
 gem 'sequel_pg', require: false
 gem 'sinatra'
+gem 'scientist'
 
 group :test do
   gem 'artifice'

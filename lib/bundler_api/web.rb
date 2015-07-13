@@ -11,6 +11,7 @@ require 'bundler_api/runtime_instrumentation'
 require 'bundler_api/gem_helper'
 require 'bundler_api/update/job'
 require 'bundler_api/update/yank_job'
+require 'scientist'
 
 class BundlerApi::Web < Sinatra::Base
   API_REQUEST_LIMIT    = 200
@@ -178,6 +179,24 @@ class BundlerApi::Web < Sinatra::Base
     dependencies = []
     keys = gems.map { |g| "deps/v1/#{g}" }
     @dalli_client.get_multi(keys) do |key, value|
+
+      name = key.gsub("deps/v1/", "")
+
+      exp = Scientist::Default.new 'dependency'
+      exp.class.send :include, Scientist::Experiment::RaiseOnMismatch
+      exp.context gem: name
+      exp.use { value }
+      exp.try {  'test' }
+
+      def exp.publish(result)
+        unless result.matched?
+          scientist_logger = ::Logger.new('log/scientist.log')
+          scientist_logger.info { "dependency cache of #{result.context} mismatch" }
+        end
+      end
+
+      exp.run
+
       Metriks.meter('dependencies.memcached.hit').mark
       keys.delete(key)
       dependencies += value
@@ -192,4 +211,5 @@ class BundlerApi::Web < Sinatra::Base
     end
     dependencies
   end
+
 end
