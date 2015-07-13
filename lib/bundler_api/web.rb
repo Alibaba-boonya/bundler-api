@@ -181,12 +181,13 @@ class BundlerApi::Web < Sinatra::Base
     @dalli_client.get_multi(keys) do |key, value|
 
       name = key.gsub("deps/v1/", "")
+      conn = @conn
 
       exp = Scientist::Default.new 'dependency'
       exp.class.send :include, Scientist::Experiment::RaiseOnMismatch
       exp.context gem: name
       exp.use { value }
-      exp.try {  'test' }
+      exp.try { BundlerApi::DepCalc.fetch_dependency(conn, name) }
 
       def exp.publish(result)
         unless result.matched?
