@@ -16,6 +16,7 @@ gem 'sequel'
 gem 'sequel_pg', require: false
 gem 'sinatra'
 gem 'scientist'
+gem 'dotenv'
 
 group :test do
   gem 'artifice'
@@ -27,5 +28,4 @@ end
 
 group :development, :test do
   gem 'foreman'
-  gem 'dotenv', require: false
 end
